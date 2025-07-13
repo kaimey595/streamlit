@@ -1,0 +1,49 @@
+import streamlit as st
+import pandas as pd
+
+# Company and Customer Details
+company_name = "Veera Enterprises"
+customer_name = "Eswaran"
+tax_percentage = 18.0  # Fixed 18% tax
+
+st.title(f"🧾 {company_name} - Final Bill")
+st.header(f"📌 Billed To: {customer_name}")
+st.subheader(f"🧮 GST Applied: {tax_percentage:.0f}%")
+
+# Fixed item list
+items = [
+    {"Item": "Rice",  "Weight (KG)": 10, "Price (₹)": 900},
+    {"Item": "Wheat", "Weight (KG)": 5,  "Price (₹)": 800},
+    {"Item": "Sugar", "Weight (KG)": 4,  "Price (₹)": 700},
+    {"Item": "Rava",  "Weight (KG)": 3,  "Price (₹)": 600},
+    {"Item": "Dhall", "Weight (KG)": 2,  "Price (₹)": 500},
+]
+
+# Calculate tax and total for each item
+for item in items:
+    price = item["Price (₹)"]
+    tax = (tax_percentage / 100) * price
+    total = price + tax
+    item["Tax (₹)"] = round(tax, 2)
+    item["Total with Tax (₹)"] = round(total, 2)
+
+# Convert to DataFrame for display
+df = pd.DataFrame(items)
+
+# Show table
+st.subheader("📦 Item-wise Details")
+st.dataframe(df, use_container_width=True)
+
+# Total Calculations
+subtotal = sum(item["Price (₹)"] for item in items)
+total_tax = sum(item["Tax (₹)"] for item in items)
+grand_total = sum(item["Total with Tax (₹)"] for item in items)
+
+# Show summary
+st.subheader("💰 Bill Summary")
+st.write(f"Subtotal (Before Tax): ₹{subtotal:.2f}")
+st.write(f"Total GST @ {tax_percentage:.0f}%: ₹{total_tax:.2f}")
+st.success(f"✅ Grand Total (Including Tax): ₹{grand_total:.2f}")
+
+st.markdown("---")
+st.markdown("🙏 **Thank you for shopping with Veera Enterprises!**")
