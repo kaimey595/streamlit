@@ -1,0 +1,51 @@
+import streamlit as st
+
+st.set_page_config(page_title="Simple & EMI Calculator", layout="centered")
+
+st.title("🧮 Simple Calculator & 💰 EMI Calculator")
+
+# Section 1: Simple Calculator
+st.header("🧮 Simple Calculator")
+
+num1 = st.number_input("Enter first number", value=0.0)
+num2 = st.number_input("Enter second number", value=0.0)
+
+operation = st.selectbox("Select operation", ["+", "-", "*", "/"])
+
+if st.button("Calculate"):
+    if operation == "+":
+        result = num1 + num2
+        st.success(f"Result: {num1} + {num2} = {result}")
+    elif operation == "-":
+        result = num1 - num2
+        st.success(f"Result: {num1} - {num2} = {result}")
+    elif operation == "*":
+        result = num1 * num2
+        st.success(f"Result: {num1} × {num2} = {result}")
+    elif operation == "/":
+        if num2 != 0:
+            result = num1 / num2
+            st.success(f"Result: {num1} ÷ {num2} = {result}")
+        else:
+            st.error("Cannot divide by zero!")
+
+# Section 2: EMI Calculator
+st.header("💰 EMI Calculator")
+
+principal = st.number_input("Loan Amount (Principal)", min_value=0.0, step=1000.0)
+rate = st.number_input("Annual Interest Rate (%)", min_value=0.0, step=0.1)
+years = st.number_input("Loan Period (Years)", min_value=0.0, step=1.0)
+
+if st.button("Calculate EMI"):
+    if principal > 0 and rate > 0 and years > 0:
+        monthly_rate = rate / (12 * 100)
+        months = years * 12
+        emi = (principal * monthly_rate * ((1 + monthly_rate) ** months)) / (((1 + monthly_rate) ** months) - 1)
+        total_payment = emi * months
+        total_interest = total_payment - principal
+
+        st.success(f"Monthly EMI: ₹{emi:,.2f}")
+        st.info(f"Total Payment: ₹{total_payment:,.2f}")
+        st.warning(f"Total Interest: ₹{total_interest:,.2f}")
+    else:
+        st.error("Please enter values greater than zero for all fields.")
