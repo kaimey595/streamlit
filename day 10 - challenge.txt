@@ -1,0 +1,22 @@
+import streamlit as st
+
+# Title
+st.title("Name Length Checker")
+
+# Input section
+st.header("Enter 5 Names")
+
+# Create input fields for 5 names
+names = []
+for i in range(5):
+    name = st.text_input(f"Enter name {i+1}", key=f"name_{i}")
+    names.append(name)
+
+# Button to display names and their lengths
+if st.button("Show Names and Lengths"):
+    st.subheader("Name Lengths:")
+    for name in names:
+        if name:
+            st.write(f"🟢 Name: `{name}` — Length: `{len(name)}` characters")
+        else:
+            st.write("🔴 A name was not entered.")
