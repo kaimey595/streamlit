@@ -1,0 +1,37 @@
+import streamlit as st
+import pandas as pd
+import matplotlib.pyplot as plt
+
+# Title of the app
+st.title("Sum of Numbers from 1 to N with Graph")
+
+# User input
+n = st.number_input("Enter a positive integer (N):", min_value=1, step=1)
+
+# Initialize variables
+sum_total = 0
+values = []
+sums = []
+
+# Loop to calculate cumulative sums
+for i in range(1, n + 1):
+    sum_total += i
+    values.append(i)
+    sums.append(sum_total)
+
+# Display result
+st.subheader(f"Sum of numbers from 1 to {n} is: {sum_total}")
+
+# Create a DataFrame for plotting
+df = pd.DataFrame({
+    'Number': values,
+    'Cumulative Sum': sums
+})
+
+# Plot using matplotlib
+fig, ax = plt.subplots()
+ax.bar(df['Number'], df['Cumulative Sum'], color='skyblue')
+ax.set_xlabel("Number")
+ax.set_ylabel("Cumulative Sum")
+ax.set_title("Cumulative Sum from 1 to N")
+st.pyplot(fig)
