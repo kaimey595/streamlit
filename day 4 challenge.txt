@@ -1,0 +1,43 @@
+import streamlit as st
+
+# Title
+st.title("Age Group Classifier")
+
+# Description
+st.write("Enter your age to determine if you are a Child, Teenager, Adult, or Senior.")
+
+# Age input
+age = st.number_input("Enter your age", min_value=0, max_value=120, step=1)
+
+# Classification function
+def classify_age(age):
+    if age <= 12:
+        return "Child"
+    elif age <= 19:
+        return "Teenager"
+    elif age <= 59:
+        return "Adult"
+    else:
+        return "Senior"
+
+# Display all groups with highlights
+if age is not None:
+    result = classify_age(age)
+
+    st.subheader("Result:")
+    st.success(f"You are classified as: **{result}**")
+
+    st.markdown("---")
+    st.subheader("All Age Group Categories:")
+    categories = {
+        "Child (0–12)": "🧒",
+        "Teenager (13–19)": "🧑",
+        "Adult (20–59)": "👨",
+        "Senior (60+)": "👴"
+    }
+
+    for label, emoji in categories.items():
+        if result.lower() in label.lower():
+            st.markdown(f"✅ **{label}** {emoji}")
+        else:
+            st.markdown(f"🔹 {label} {emoji}")
