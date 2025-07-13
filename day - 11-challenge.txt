@@ -1,0 +1,41 @@
+import streamlit as st
+
+st.set_page_config(page_title="Ramesh's Grade Checker", layout="centered")
+
+# App title
+st.title("📘 Ramesh's Grade Average Calculator")
+
+st.markdown("Enter Ramesh's marks for each subject to calculate the average and determine Pass/Fail status.")
+
+# Subject-wise input
+maths = st.number_input("Maths", min_value=0, max_value=100, step=1, value=0)
+cs = st.number_input("Computer Science", min_value=0, max_value=100, step=1, value=0)
+chemistry = st.number_input("Chemistry", min_value=0, max_value=100, step=1, value=0)
+physics = st.number_input("Physics", min_value=0, max_value=100, step=1, value=0)
+english = st.number_input("English", min_value=0, max_value=100, step=1, value=0)
+
+# Collect scores
+scores = {
+    "Maths": maths,
+    "Computer Science": cs,
+    "Chemistry": chemistry,
+    "Physics": physics,
+    "English": english
+}
+
+# Process on button click
+if st.button("Calculate Result"):
+    total = sum(scores.values())
+    average = total / len(scores)
+
+    # Determine Pass or Fail
+    result = "✅ Pass" if average >= 40 else "❌ Fail"
+
+    # Display results
+    st.subheader("🎓 Results")
+    st.write("**Marks Obtained:**")
+    for subject, score in scores.items():
+        st.write(f"- {subject}: {score}")
+
+    st.markdown(f"**Average Score:** `{average:.2f}`")
+    st.markdown(f"**Result:** {result}")
