@@ -1,0 +1,33 @@
+import streamlit as st
+
+# Title
+st.title("🎉 Personalized Greeting Generator")
+
+# Introduction
+st.write("Hello! Let's create a fun and personalized message for you.")
+
+# User Inputs
+name = st.text_input("👤 What's your name?")
+age = st.number_input("🎂 What's your age?", min_value=1, max_value=120, step=1)
+food = st.text_input("🍲 What's your favorite food?")
+dress = st.text_input("👗 What kind of dress do you like?")
+color = st.color_picker("🎨 Pick your favorite color")
+
+# Display only when name is given
+if name and food and dress:
+    # Personalized message
+    st.markdown("### 💌 Your Personalized Message:")
+
+    message = f"""
+    👋 Hi **{name}**, you’re {age} years young and fabulous!  
+    We hope you’re enjoying a delicious plate of **{food}** 🍽️  
+    while dressed in your favorite **{dress}** 👚  
+    surrounded by the calming vibe of your favorite color:  
+    <span style='color:{color}; font-weight:bold;'>{color}</span> 🎨  
+
+    🌟 Have an amazing day, {name}!
+    """
+    st.markdown(message, unsafe_allow_html=True)
+else:
+    st.info("Please fill in all the details to get your personalized message.")
+
