@@ -1,0 +1,71 @@
+import streamlit as st
+import string
+
+def check_password_strength(password):
+    min_length = 8
+    strength_score = 0
+    reasons = []
+
+    # Check length
+    if len(password) >= min_length:
+        strength_score += 1
+    else:
+        reasons.append("Password must be at least 8 characters long.")
+
+    # Check for lowercase
+    if any(char.islower() for char in password):
+        strength_score += 1
+    else:
+        reasons.append("Add lowercase letters.")
+
+    # Check for uppercase
+    if any(char.isupper() for char in password):
+        strength_score += 1
+    else:
+        reasons.append("Add uppercase letters.")
+
+    # Check for digits
+    if any(char.isdigit() for char in password):
+        strength_score += 1
+    else:
+        reasons.append("Add numbers.")
+
+    # Check for special characters
+    if any(char in string.punctuation for char in password):
+        strength_score += 1
+    else:
+        reasons.append("Add special characters (e.g. @, #, !).")
+
+    # Determine strength level
+    if strength_score <= 2:
+        strength = "❌ Weak"
+        color = "red"
+    elif strength_score == 3 or strength_score == 4:
+        strength = "⚠️ Medium"
+        color = "orange"
+    else:
+        strength = "✅ Strong"
+        color = "green"
+
+    return strength, color, reasons
+
+# Streamlit App UI
+st.title("🔐 Password Strength Checker")
+st.write("Check if your password is strong and meets basic security standards.")
+
+# Password input
+password = st.text_input("Enter your password:", type="password")
+
+# Evaluate
+if password:
+    strength, color, feedback = check_password_strength(password)
+    
+    st.markdown(f"### Password Strength: <span style='color:{color}'>{strength}</span>", unsafe_allow_html=True)
+    
+    if feedback:
+        st.subheader("🛠 Suggestions to Improve:")
+        for f in feedback:
+            st.write(f"• {f}")
+    else:
+        st.success("Your password is strong! 💪")
+
