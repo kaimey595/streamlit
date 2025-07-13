@@ -1,0 +1,24 @@
+import streamlit as st
+
+def check_even_odd(num):
+    return "Even" if num % 2 == 0 else "Odd"
+
+st.title("🔢 Even or Odd Checker")
+
+# Single number input
+st.header("Check a Single Number")
+number = st.number_input("Enter a number", value=0, step=1)
+result = check_even_odd(number)
+st.success(f"The number {number} is **{result}**.")
+
+# List of numbers input
+st.header("Check a List of Numbers")
+numbers_input = st.text_area("Enter numbers separated by commas", "10, 15, 22, 33, 40")
+if numbers_input:
+    try:
+        numbers_list = [int(num.strip()) for num in numbers_input.split(",")]
+        st.write("### Results for List:")
+        for num in numbers_list:
+            st.write(f"- {num} is **{check_even_odd(num)}**")
+    except ValueError:
+        st.error("Please enter only valid integers separated by commas.")
