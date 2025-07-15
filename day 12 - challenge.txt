@@ -1,0 +1,35 @@
+import streamlit as st
+import time
+import pandas as pd
+
+st.title("🏁 Countdown and Race Results")
+
+# Countdown from 10 to 0
+if st.button("Start Countdown"):
+    countdown_placeholder = st.empty()
+    for i in range(10, -1, -1):
+        countdown_placeholder.markdown(f"### ⏳ Countdown: **{i}**")
+        time.sleep(1)
+    st.success("🎯 Countdown Finished! Race Results Below")
+
+    # Participants' race times (in seconds)
+    results = {
+        "Participant": ["Raman", "Krishna", "Vishna"],
+        "Time (sec)": [10.50, 11.50, 12.00]
+    }
+
+    # Convert to DataFrame
+    df = pd.DataFrame(results)
+
+    # Sort by time to get order
+    df_sorted = df.sort_values("Time (sec)").reset_index(drop=True)
+    df_sorted.index += 1  # Rank starting from 1
+
+    # Display results
+    st.subheader("🏆 Final Standings")
+    st.dataframe(df_sorted)
+
+    # Announce winner
+    winner = df_sorted.iloc[0]["Participant"]
+    time_taken = df_sorted.iloc[0]["Time (sec)"]
+    st.success(f"🥇 Winner: **{winner}** with time {time_taken} sec")
