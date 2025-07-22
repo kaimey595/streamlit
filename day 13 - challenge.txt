@@ -1,0 +1,19 @@
+import streamlit as st
+
+# Title
+st.title("Find the Largest Number Without Using max()")
+
+# Given list of numbers
+numbers = [25, 65, 32, 26, 67, 82]
+st.write("List of Numbers:", numbers)
+
+# Initialize largest with the first element
+largest = numbers[0]
+
+# Loop to find the largest manually
+for num in numbers:
+    if num > largest:
+        largest = num
+
+# Display the result
+st.success(f"The largest number is: {largest}")
