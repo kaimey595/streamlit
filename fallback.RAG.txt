@@ -1,0 +1,99 @@
+import streamlit as st
+from langchain_community.embeddings import OpenAIEmbeddings
+from langchain_community.vectorstores import FAISS
+from langchain_community.document_loaders import TextLoader
+from langchain.text_splitter import CharacterTextSplitter
+from langchain.chat_models import ChatOpenAI
+from langchain.chains import RetrievalQA
+import os
+
+# Set OpenAI API Key
+os.environ["OPENAI_API_KEY"] = "your API Key""
+
+# Streamlit Title
+st.title("📈 Business Growth & Target Planner (with RAG Fallback)")
+
+# File upload
+st.sidebar.header("📂 Upload Knowledge File")
+uploaded_file = st.sidebar.file_uploader("Upload `.txt` file with business context", type="txt")
+
+# User query input
+st.subheader("❓ Ask a Business Strategy Question")
+user_query = st.text_input("e.g., How can I improve product reach in a specific area?")
+
+# Fallback function if RAG fails
+def fallback_llm_answer(query):
+    llm = ChatOpenAI(temperature=0, model="gpt-3.5-turbo")
+    return llm.predict(query)
+
+# Main logic
+if uploaded_file and user_query:
+    # Save file
+    with open("temp_business.txt", "wb") as f:
+        f.write(uploaded_file.read())
+
+    # Load and split text
+    loader = TextLoader("temp_business.txt")
+    docs = loader.load()
+    splitter = CharacterTextSplitter(chunk_size=500, chunk_overlap=50)
+    split_docs = splitter.split_documents(docs)
+
+    # Embedding and retrieval
+    embeddings = OpenAIEmbeddings()
+    db = FAISS.from_documents(split_docs, embeddings)
+    retriever = db.as_retriever(search_type="similarity", search_kwargs={"k": 3})
+
+    # Run RAG
+    rag_chain = RetrievalQA.from_chain_type(
+        llm=ChatOpenAI(temperature=0, model="gpt-3.5-turbo"),
+        retriever=retriever,
+        return_source_documents=True
+    )
+
+    result = rag_chain({"query": user_query})
+    answer = result["result"]
+    source_docs = result.get("source_documents", [])
+
+    # Fallback if no relevant sources
+    if not source_docs or answer.strip().lower() in ["i don't know", "i’m not sure"]:
+        st.warning("🔄 Switching to fallback LLM (no strong match found in knowledge base).")
+        answer = fallback_llm_answer(user_query)
+        context_quality = "None"
+        info_level = "Limited"
+        confidence = "Low"
+    else:
+        # Confidence Level
+        if any(word in answer.lower() for word in ["must", "essential", "critical"]):
+            confidence = "High"
+        elif any(word in answer.lower() for word in ["can", "should", "may"]):
+            confidence = "Medium"
+        else:
+            confidence = "Low"
+
+        # Info Level
+        if len(answer.split()) > 100:
+            info_level = "Complete"
+        elif 50 < len(answer.split()) <= 100:
+            info_level = "Partial"
+        else:
+            info_level = "Limited"
+
+    # Show answer
+    st.markdown("### 💡 Suggested Answer")
+    st.write(answer)
+
+    # Evaluation
+    st.markdown("### 📊 Evaluation")
+    st.write(f"**Confidence Level:** {confidence}")
+    st.write(f"**Information Level:** {info_level}")
+
+    if source_docs:
+        with st.expander("📚 Source Chunks"):
+            for i, doc in enumerate(source_docs):
+                st.markdown(f"**Chunk {i+1}:**")
+                st.text(doc.page_content)
+
+elif not uploaded_file:
+    st.info("📎 Please upload a `.txt` file to begin.")
+elif not user_query:
+    st.info("💬 Enter your query above to start the evaluation.")
