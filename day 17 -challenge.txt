@@ -1,0 +1,48 @@
+import streamlit as st
+
+# Sentence to process
+sentence = "Once upon a time, a lion lived in Jungle."
+
+# Function to extract initials and format them with blinking
+def highlight_and_blink_initials(text):
+    words = text.split()
+    highlighted_text = ""
+
+    for word in words:
+        if word:  # Make sure it's not empty
+            first = word[0]
+            rest = word[1:]
+            highlighted_text += f'<span class="blink">{first}</span>{rest} '
+
+    return highlighted_text.strip()
+
+# ✅ Custom CSS for blinking effect (CLOSES properly)
+blink_css = """
+<style>
+.blink {
+  animation: blinker 1s linear infinite;
+  color: yellow;
+  background-color: black;
+  font-weight: bold;
+  padding: 2px 4px;
+  border-radius: 4px;
+}
+@keyframes blinker {
+  50% { opacity: 0; }
+}
+</style>
+"""
+
+# Streamlit App
+st.set_page_config(page_title="Initials Highlighter", layout="centered")
+st.title("✨ Initials Highlighter and Blinker")
+
+st.markdown("### Original Sentence:")
+st.write(sentence)
+
+# Process and display with blinking effect
+highlighted = highlight_and_blink_initials(sentence)
+
+# Display with HTML and blinking CSS
+st.markdown(blink_css, unsafe_allow_html=True)
+st.markdown(f"<p style='font-size:24px'>{highlighted}</p>", unsafe_allow_html=True)
