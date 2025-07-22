@@ -1,0 +1,30 @@
+import streamlit as st
+
+def reverse_words(sentence):
+    return ' '.join(word[::-1] for word in sentence.split())
+
+def reverse_sentence(sentence):
+    return ' '.join(sentence.split()[::-1])
+
+def reverse_sentence_and_words(sentence):
+    return ' '.join(word[::-1] for word in sentence.split()[::-1])
+
+# Streamlit app
+st.title("🔁 Word and Sentence Reverser")
+st.write("Enter a sentence below to reverse words, sentence, or both.")
+
+input_text = st.text_input("Enter a sentence:", "once upon a time")
+
+if input_text:
+    st.subheader("🔄 Reversed Outputs:")
+
+    reversed_words = reverse_words(input_text)
+    st.write(f"**1. Reverse each word only:** `{reversed_words}`")
+
+    reversed_sent = reverse_sentence(input_text)
+    st.write(f"**2. Reverse sentence only:** `{reversed_sent}`")
+
+    reversed_both = reverse_sentence_and_words(input_text)
+    st.write(f"**3. Reverse sentence and each word:** `{reversed_both}`")
+
+    st.subheader("✅ Done!")
