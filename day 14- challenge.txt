@@ -1,0 +1,43 @@
+import streamlit as st
+
+# Function to count vowels
+def count_vowels(word):
+    vowels = "aeiouAEIOU"
+    vowel_count = {}
+    total = 0
+    for char in word:
+        if char in vowels:
+            vowel_count[char.lower()] = vowel_count.get(char.lower(), 0) + 1
+            total += 1
+    return total, vowel_count
+
+# Streamlit App
+st.title("🔤 Vowel Counter App")
+
+st.write("Enter a word and see how many vowels it contains!")
+
+# User input
+user_input = st.text_input("Enter a word:", "education")
+
+if user_input:
+    total_vowels, vowel_breakdown = count_vowels(user_input)
+
+    st.subheader("📊 Results")
+    st.write(f"**Word Entered:** {user_input}")
+    st.write(f"**Total Vowels:** {total_vowels}")
+    st.write("**Each Vowel Count:**")
+    st.json(vowel_breakdown)
+
+    st.subheader("ℹ️ Importance of Vowels")
+    st.markdown("""
+    - Vowels are the building blocks of **syllables** in words.
+    - Every English word has **at least one vowel**.
+    - Vowels help in **clear pronunciation** and **phonetic flow**.
+    - **Examples of vowel-heavy words**:
+        - *Education* → e, u, a, i, o
+        - *Idea* → i, e, a
+        - *Ocean* → o, e, a
+    """)
+
+    st.success("Vowels are essential to forming words and sounds in every language!")
+
