@@ -1,0 +1,35 @@
+import streamlit as st
+import random
+
+# Function to shift a single character
+def shift_letter(c):
+    if c.isalpha():
+        base = ord('A') if c.isupper() else ord('a')
+        return chr((ord(c) - base + 1) % 26 + base)
+    return c
+
+# Function to generate random color
+def get_random_color():
+    return f"#{random.randint(0, 0xFFFFFF):06x}"
+
+# Function to shift entire text and colorize it
+def shift_and_colorize(text):
+    result_html = ""
+    for word in text.split():
+        colored_word = ""
+        for c in word:
+            shifted = shift_letter(c)
+            color = get_random_color()
+            colored_word += f"<span style='color:{color}; font-weight:bold'>{shifted}</span>"
+        result_html += colored_word + " "
+    return result_html.strip()
+
+# Streamlit UI
+st.set_page_config(page_title="Letter Shifter", layout="centered")
+st.title("🔤 Alphabet Letter Shifter with Colors")
+input_text = st.text_area("Enter your text:", "One upon a time, a lion was lived in jungle.")
+
+if st.button("Shift Letters"):
+    shifted_html = shift_and_colorize(input_text)
+    st.markdown("### 🔁 Shifted Output with Colors")
+    st.markdown(shifted_html, unsafe_allow_html=True)
