@@ -1,0 +1,34 @@
+import streamlit as st
+
+def format_name(full_name):
+    name_parts = full_name.strip().split()
+
+    if len(name_parts) < 2:
+        return {"Error": "Please enter at least a first and last name."}
+
+    first = name_parts[0]
+    last = name_parts[-1]
+    middle = " ".join(name_parts[1:-1]) if len(name_parts) > 2 else ""
+
+    return {
+        "Original": full_name,
+        "First Last": f"{first} {last}",
+        "Last, First": f"{last}, {first}",
+        "Initials": "".join([part[0].upper() for part in name_parts]),
+        "Uppercase": full_name.upper(),
+        "Lowercase": full_name.lower(),
+        "Title Case": full_name.title(),
+        "First Middle Last": f"{first} {middle} {last}" if middle else f"{first} {last}"
+    }
+
+# Streamlit UI
+st.set_page_config(page_title="Name Formatter", layout="centered")
+st.title("🧾 Full Name Formatter")
+
+full_name = st.text_input("Enter your full name (e.g., John Michael Doe):")
+
+if full_name:
+    st.subheader("Formatted Results:")
+    results = format_name(full_name)
+    for key, value in results.items():
+        st.write(f"**{key}:** {value}")
