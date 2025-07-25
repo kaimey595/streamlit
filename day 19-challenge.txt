@@ -1,0 +1,31 @@
+import streamlit as st
+
+def extract_username(email):
+    """
+    Extracts the username (part before @) from an email address.
+    Returns None if the email is invalid (no @ symbol).
+    """
+    if "@" in email:
+        return email.split("@")[0]
+    else:
+        return None
+
+st.title("Email Username Extractor")
+
+st.write("Enter an email address to extract the username.")
+
+# Input field for the email address
+email_input = st.text_input("Email Address", "vpveerabahu@gmail.com") # Pre-fill with the example
+
+if st.button("Extract Username"):
+    if email_input:
+        username = extract_username(email_input)
+        if username is not None:
+            st.success(f"The username is: **{username}**")
+        else:
+            st.error("Invalid email address. Please ensure it contains an '@' symbol.")
+    else:
+        st.warning("Please enter an email address.")
+
+st.write("---")
+st.write("This application demonstrates basic string manipulation in Streamlit.")
