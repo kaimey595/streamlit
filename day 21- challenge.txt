@@ -1,0 +1,26 @@
+import streamlit as st
+import re
+
+def format_phone_number(number_str):
+    """
+    Formats a 10-digit number string into (XXX)xxx-XXXX.
+    Returns an error message if the input is not a valid 10-digit number.
+    """
+    # Remove any non-digit characters
+    digits_only = re.sub(r'\D', '', number_str)
+
+    if len(digits_only) == 10:
+        return f"({digits_only[0:3]}){digits_only[3:6]}-{digits_only[6:10]}"
+    else:
+        return "Invalid input: Please enter a 10-digit number."
+
+st.title("Phone Number Formatter")
+
+st.write("Enter a 10-digit number below to format it as (XXX)xxx-XXXX.")
+
+# Input field for the user to enter the number
+user_input = st.text_input("Enter a 10-digit number:")
+
+if user_input:
+    formatted_number = format_phone_number(user_input)
+    st.write(f"**Formatted Number:** {formatted_number}")
