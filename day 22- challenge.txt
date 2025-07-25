@@ -1,0 +1,92 @@
+import streamlit as st
+import math
+
+# --- Area Calculation Functions ---
+
+def circle_area(radius):
+    """Calculates the area of a circle."""
+    if radius < 0:
+        return "Radius cannot be negative."
+    return math.pi * (radius ** 2)
+
+def rectangle_area(length, width):
+    """Calculates the area of a rectangle."""
+    if length < 0 or width < 0:
+        return "Length and width cannot be negative."
+    return length * width
+
+def triangle_area(base, height):
+    """Calculates the area of a triangle."""
+    if base < 0 or height < 0:
+        return "Base and height cannot be negative."
+    return 0.5 * base * height
+
+def square_area(side):
+    """Calculates the area of a square."""
+    if side < 0:
+        return "Side length cannot be negative."
+    return side ** 2
+
+def hexagon_area(side):
+    """Calculates the area of a regular hexagon."""
+    if side < 0:
+        return "Side length cannot be negative."
+    return (3 * math.sqrt(3) / 2) * (side ** 2)
+
+# --- Streamlit Application ---
+
+st.set_page_config(layout="centered", page_title="Shape Area Calculator")
+
+st.title("Geometric Shape Area Calculator")
+
+st.markdown("""
+This application allows you to calculate the area of various geometric shapes.
+Select a shape from the dropdown and enter the required dimensions.
+""")
+
+shape_options = {
+    "Circle": "circle",
+    "Rectangle": "rectangle",
+    "Triangle": "triangle",
+    "Square": "square",
+    "Hexagon (Regular)": "hexagon"
+}
+
+selected_shape_name = st.selectbox("Select a shape:", list(shape_options.keys()))
+selected_shape_key = shape_options[selected_shape_name]
+
+st.subheader(f"Calculate Area of {selected_shape_name}")
+
+area = None
+
+if selected_shape_key == "circle":
+    radius = st.number_input("Enter the radius:", min_value=0.0, format="%.2f")
+    if st.button("Calculate Circle Area"):
+        area = circle_area(radius)
+elif selected_shape_key == "rectangle":
+    length = st.number_input("Enter the length:", min_value=0.0, format="%.2f")
+    width = st.number_input("Enter the width:", min_value=0.0, format="%.2f")
+    if st.button("Calculate Rectangle Area"):
+        area = rectangle_area(length, width)
+elif selected_shape_key == "triangle":
+    base = st.number_input("Enter the base:", min_value=0.0, format="%.2f")
+    height = st.number_input("Enter the height:", min_value=0.0, format="%.2f")
+    if st.button("Calculate Triangle Area"):
+        area = triangle_area(base, height)
+elif selected_shape_key == "square":
+    side = st.number_input("Enter the side length:", min_value=0.0, format="%.2f")
+    if st.button("Calculate Square Area"):
+        area = square_area(side)
+elif selected_shape_key == "hexagon":
+    side = st.number_input("Enter the side length:", min_value=0.0, format="%.2f")
+    if st.button("Calculate Hexagon Area"):
+        area = hexagon_area(side)
+
+if area is not None:
+    if isinstance(area, str): # Check if it's an error message
+        st.error(area)
+    else:
+        st.success(f"The area of the {selected_shape_name.lower()} is: {area:.2f}")
+
+st.markdown("---")
+st.write("Developed with Streamlit by your AI assistant.")
