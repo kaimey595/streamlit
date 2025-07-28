@@ -1,0 +1,28 @@
+import streamlit as st
+
+# Streamlit page title
+st.title("🔤 Text Transformer App")
+
+# Input text box
+user_input = st.text_input("Enter your text:")
+
+# Only proceed if input is not empty
+if user_input:
+    # Capitalize function
+    capitalized_text = user_input.upper()
+
+    # Reverse function
+    reversed_text = user_input[::-1]
+
+    # Character count
+    char_count = len(user_input)
+
+    # Display results in bold
+    st.markdown("### 🔠 Capitalized Text:")
+    st.markdown(f"**{capitalized_text}**")
+
+    st.markdown("### 🔁 Reversed Text:")
+    st.markdown(f"**{reversed_text}**")
+
+    st.markdown("### 🔢 Character Count:")
+    st.markdown(f"**{char_count} characters**")
