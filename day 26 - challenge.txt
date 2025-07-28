@@ -1,0 +1,53 @@
+import streamlit as st
+import matplotlib.pyplot as plt
+
+# Title
+st.set_page_config(page_title="List Analyzer", layout="centered")
+st.title("📊 List Analyzer: Max, Min, Sum & Average")
+st.markdown("Enter a list of numbers (comma-separated), and we'll compute the key stats with explanation and graph.")
+
+# Input
+user_input = st.text_input("🔢 Enter numbers (comma-separated)", "10, 25, 30, 45, 50")
+
+def parse_input(input_str):
+    try:
+        return [float(num.strip()) for num in input_str.split(",") if num.strip()]
+    except ValueError:
+        st.error("⚠️ Please enter valid numbers only.")
+        return []
+
+numbers = parse_input(user_input)
+
+# Function Definitions
+def calculate_stats(lst):
+    return {
+        "Maximum": max(lst),
+        "Minimum": min(lst),
+        "Sum": sum(lst),
+        "Average": sum(lst) / len(lst)
+    }
+
+# Processing and Display
+if numbers:
+    stats = calculate_stats(numbers)
+
+    # Chat-style Justified Text Output
+    st.subheader("💬 Chat Output with Explanation")
+    st.markdown(f"""
+    <div style='text-align: justify; font-size: 16px;'>
+        The list you entered contains <strong>{len(numbers)}</strong> elements.
+        Among them, the <strong>maximum</strong> value is <b>{stats['Maximum']}</b> and the <strong>minimum</strong> value is <b>{stats['Minimum']}</b>.
+        The <strong>sum</strong> of all numbers is <b>{stats['Sum']}</b>, and the <strong>average</strong> (mean) value is calculated as 
+        the total sum divided by number of items, which gives <b>{stats['Average']:.2f}</b>.
+    </div>
+    """, unsafe_allow_html=True)
+
+    # Visual Output
+    st.subheader("📉 Visual Chart")
+    fig, ax = plt.subplots()
+    ax.bar(["Max", "Min", "Sum", "Avg"], 
+           [stats["Maximum"], stats["Minimum"], stats["Sum"], stats["Average"]],
+           color=["red", "blue", "green", "orange"])
+    ax.set_ylabel("Values")
+    ax.set_title("List Statistics")
+    st.pyplot(fig)
