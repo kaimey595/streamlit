@@ -1,0 +1,81 @@
+import streamlit as st
+import math
+import matplotlib.pyplot as plt
+
+# Configure the page
+st.set_page_config(page_title="Math Calculator with Diagrams", layout="centered")
+
+st.title("🎨 Colorful Math Calculator with Diagrams")
+st.markdown("Perform **Factorial**, **Power**, and **Square Root** calculations with colorful bar charts.")
+
+st.divider()
+
+# === 1. Factorial Section ===
+st.header("🔢 Factorial Calculator with Diagram")
+fact_input = st.number_input("Enter a non-negative integer (0 or more):", min_value=0, step=1, key="fact_input")
+
+def factorial(n):
+    return math.factorial(n)
+
+if st.button("Calculate Factorial"):
+    result = factorial(fact_input)
+    st.success(f"✅ Factorial of **{fact_input}** is **{result}**")
+
+    # Plot bar diagram
+    fig, ax = plt.subplots()
+    values = [math.factorial(i) for i in range(fact_input + 1)]
+    ax.bar(range(fact_input + 1), values, color='skyblue')
+    ax.set_title(f'Factorial Progression up to {fact_input}')
+    ax.set_xlabel("n")
+    ax.set_ylabel("n!")
+    st.pyplot(fig)
+
+st.divider()
+
+# === 2. Power Section ===
+st.header("⚡ Power Calculator with Diagram")
+base = st.number_input("Enter the base (a):", value=2.0, key="base_input")
+exponent = st.number_input("Enter the exponent (b):", value=5.0, key="exp_input")
+
+def power(a, b):
+    return math.pow(a, b)
+
+if st.button("Calculate Power"):
+    result = power(base, exponent)
+    st.info(f"⚙️ **{base}⁽{exponent}⁾** = **{result:.4f}**")
+
+    # Plot bar diagram
+    fig, ax = plt.subplots()
+    x_vals = list(range(1, int(exponent) + 1))
+    y_vals = [math.pow(base, i) for i in x_vals]
+    ax.bar(x_vals, y_vals, color='orange')
+    ax.set_title(f'Powers of {base} up to exponent {int(exponent)}')
+    ax.set_xlabel("Exponent")
+    ax.set_ylabel(f"{base}^n")
+    st.pyplot(fig)
+
+st.divider()
+
+# === 3. Square Root Section ===
+st.header("🟩 Square Root Calculator with Diagram")
+sqrt_input = st.number_input("Enter a positive number:", min_value=0.0, value=16.0, key="sqrt_input")
+
+def square_root(n):
+    return math.sqrt(n)
+
+if st.button("Calculate Square Root"):
+    result = square_root(sqrt_input)
+    st.warning(f"🧮 √{sqrt_input} = **{result:.4f}**")
+
+    # Plot bar diagram of sqrt progression
+    fig, ax = plt.subplots()
+    x_vals = list(range(1, int(sqrt_input) + 1))
+    y_vals = [math.sqrt(x) for x in x_vals]
+    ax.bar(x_vals, y_vals, color='green')
+    ax.set_title(f'Square Roots from 1 to {int(sqrt_input)}')
+    ax.set_xlabel("x")
+    ax.set_ylabel("√x")
+    st.pyplot(fig)
+
+st.divider()
+st.markdown("🎨 Made with ❤️ using **Streamlit + Matplotlib**")
