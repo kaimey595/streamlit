@@ -1,0 +1,331 @@
+import os
+from dotenv import load_dotenv
+import streamlit as st
+
+# (Optional) keep your Autogen imports so your environment matches your earlier setup
+from autogen_agentchat.agents import AssistantAgent, UserProxyAgent
+from autogen_ext.models.openai import OpenAIChatCompletionClient
+
+# ────────────────────────────────────────────────────────────────────────────────
+# Environment / Model
+# ────────────────────────────────────────────────────────────────────────────────
+load_dotenv()
+API_KEY = os.getenv("OPENAI_API_KEY")
+if not API_KEY:
+    raise ValueError("OPENAI_API_KEY not found in .env file")
+
+model_client = OpenAIChatCompletionClient(
+    model="gpt-4o-mini",  # You can switch to "gpt-4o" if available
+    api_key=API_KEY,
+)
+
+# ────────────────────────────────────────────────────────────────────────────────
+# Hotel Knowledge & Scripts (Structured)
+# ────────────────────────────────────────────────────────────────────────────────
+HOTEL_KB = {
+    "food": "Our restaurant serves Breakfast, Lunch, and Dinner.",
+    "room_service": "Room service is available 24×7 for your convenience.",
+    "rooms": "Rooms are available at affordable cost. Please share your dates and guests to get the best options.",
+    "amenities": "Amenities include free Wi-Fi, 24×7 room service, complimentary toiletries, and airport pickup on request.",
+    "restaurant_hours": "Restaurant hours: 7:00 AM – 10:30 PM (last order 10:00 PM).",
+    "promotions": "This week’s promotion: 10% off for stays of 3+ nights and a complimentary welcome drink.",
+    "check_in_out": "Check-in is at 2:00 PM and check-out is at 12:00 PM. Early check-in and late check-out are subject to availability.",
+    "attractions": "Nearby attractions include VOC Park & Zoo, Brookefields Mall, Marudamalai Temple, and Gass Forest Museum.",
+}
+
+SCRIPTS = {
+    "Receptionist": {
+        "greeting": "Welcome to Hotel Eswaran! How may I assist you with your reservation today?",
+        "intents": {
+            "greet": "Could you please provide your booking details or let me know if you want to make a new reservation?",
+            "reservation_make": (
+                "I’d be delighted to help you book a room. May I know your check-in/check-out dates, "
+                "number of guests, and preferred room type?"
+            ),
+            "reservation_info": "Are you looking for information about our room types and amenities?",
+            "check_in": "I can assist with your check-in. May I have your name and booking reference?",
+            "check_out": "I’ll help with your check-out. May I have your room number and a convenient check-out time?",
+            "facilities": f"Our facilities: {HOTEL_KB['amenities']} Would you like details on any specific service?",
+            "transport": "Would you like me to help you with transportation or local sightseeing suggestions?",
+            "special": "Is there anything special we can prepare for your stay—like an anniversary or birthday setup?",
+            "promotions": f"Current promotions: {HOTEL_KB['promotions']}",
+            "attractions": f"Local attractions: {HOTEL_KB['attractions']}",
+            "checkinout_policy": HOTEL_KB["check_in_out"],
+        },
+        "fallback": "I’m happy to help. May I assist you with reservations, check-in/out, facilities, or local attractions?"
+    },
+    "RoomService": {
+        "greeting": "Good day! May I assist you with placing a room service order?",
+        "intents": {
+            "menu": (
+                f"{HOTEL_KB['food']} Would you like to hear today’s special dishes or place an order now?"
+            ),
+            "order": "Sure—please share your dish selections, quantity, and room number. I’ll confirm the estimated delivery time.",
+            "eta": "Your order will be delivered promptly. May I confirm your room number and any special instructions?",
+            "amenities": "Of course. I can arrange extra pillows, towels, toiletries, or a cleaning visit. What would you prefer?",
+            "hours": "Room service is available 24×7. How may I assist you right now?",
+            "escalate": "I’ll notify our staff right away and ensure a quick response. May I have your room number?",
+        },
+        "fallback": "I’m here to make your stay comfortable. Would you like to place a food order or request amenities?"
+    },
+    "Restaurant": {
+        "greeting": "Welcome to Hotel Eswaran’s restaurant! May I help you reserve a table?",
+        "intents": {
+            "reserve": "Certainly. Please share the date, time, number of guests, and any seating preference.",
+            "menu": (
+                f"We offer South Indian, North Indian, and Continental cuisine. {HOTEL_KB['food']} "
+                "Would you like the vegetarian or non-vegetarian highlights?"
+            ),
+            "dietary": "Do you have any dietary preferences or allergies I should note? We’ll ensure a delightful experience.",
+            "hours": HOTEL_KB["restaurant_hours"],
+            "occasion": "Are you celebrating a special occasion with us today? I can arrange a cake, decor, or a chef’s greeting.",
+            "promotions": "Today’s chef’s recommendations feature seasonal specials. Would you like to hear them?",
+        },
+        "fallback": "I can help with table bookings, menu details, and special requests. How may I assist you?"
+    }
+}
+
+# Simple keyword map → route to bot
+ROUTING_KEYWORDS = {
+    "Receptionist": [
+        "reserve", "reservation", "booking", "book", "check in", "checkin", "check-out", "checkout",
+        "room types", "amenities", "transport", "sightseeing", "attraction", "promotion", "offer",
+        "price", "rate", "cost", "rooms"
+    ],
+    "RoomService": [
+        "room service", "order", "deliver", "food to room", "towels", "pillows", "toiletries",
+        "cleaning", "housekeeping", "eta", "delivery time", "water", "24x7", "24*7", "24/7"
+    ],
+    "Restaurant": [
+        "restaurant", "table", "dining", "menu", "breakfast", "lunch", "dinner", "dietary",
+        "allergy", "chef", "special", "hours", "timing", "book a table"
+    ],
+}
+
+# Quick intent hints per bot for lightweight flows
+INTENT_HINTS = {
+    "Receptionist": {
+        "reservation_make": ["book", "reserve", "new reservation"],
+        "reservation_info": ["room type", "amenities", "facilities"],
+        "check_in": ["check in", "checkin"],
+        "check_out": ["check out", "checkout"],
+        "facilities": ["facility", "amenities"],
+        "transport": ["transport", "cab", "taxi", "sightseeing"],
+        "promotions": ["promotion", "offer", "discount"],
+        "attractions": ["attraction", "nearby", "places"],
+        "checkinout_policy": ["check-in", "check out time", "policy"],
+        "greet": ["hello", "hi", "hey"],
+    },
+    "RoomService": {
+        "menu": ["menu", "food", "breakfast", "lunch", "dinner"],
+        "order": ["order", "place order", "food to room"],
+        "eta": ["how soon", "delivery time", "eta"],
+        "amenities": ["towels", "pillows", "toiletries", "cleaning", "housekeeping"],
+        "hours": ["24x7", "24/7", "24*7", "time"],
+        "escalate": ["issue", "problem", "complaint"],
+    },
+    "Restaurant": {
+        "reserve": ["reserve", "table", "booking"],
+        "menu": ["menu", "breakfast", "lunch", "dinner", "chef"],
+        "dietary": ["dietary", "allergy", "vegan", "gluten"],
+        "hours": ["hours", "timing", "open", "close"],
+        "occasion": ["birthday", "anniversary", "celebration", "cake"],
+        "promotions": ["special", "recommendation", "chef’s", "chef"],
+    },
+}
+
+# ────────────────────────────────────────────────────────────────────────────────
+# Utility: Router & Intent Matcher
+# ────────────────────────────────────────────────────────────────────────────────
+def route_bot(user_text: str) -> str:
+    text = user_text.lower()
+    for bot, keys in ROUTING_KEYWORDS.items():
+        if any(k in text for k in keys):
+            return bot
+    # LLM fallback router (polite, constrained)
+    routing_prompt = f"""
+You are a careful router for a hotel assistant. Choose exactly one:
+- Receptionist: reservations, check-in/out, facilities, prices, promotions, attractions
+- RoomService: room delivery, amenities to room, housekeeping, delivery times
+- Restaurant: dining reservations, menu, specials, dietary, restaurant hours
+
+Question: {user_text}
+Reply with only one of these words: Receptionist, RoomService, Restaurant
+"""
+    try:
+        route = model_client.create(messages=[{"role": "system", "content": routing_prompt}])
+        chosen = route["choices"][0]["message"]["content"].strip()
+        if chosen in ("Receptionist", "RoomService", "Restaurant"):
+            return chosen
+    except Exception:
+        pass
+    return "Receptionist"
+
+def match_intent(bot: str, user_text: str) -> str | None:
+    text = user_text.lower()
+    hints = INTENT_HINTS.get(bot, {})
+    for intent, keys in hints.items():
+        if any(k in text for k in keys):
+            return intent
+    return None
+
+# ────────────────────────────────────────────────────────────────────────────────
+# Optional: LLM fallback for non-hotel queries (e.g., sightseeing details)
+# ────────────────────────────────────────────────────────────────────────────────
+def llm_fallback_answer(user_text: str) -> str:
+    try:
+        resp = model_client.create(messages=[
+            {"role": "system", "content": (
+                "You are a polite hotel assistant. If the question is outside strict hotel policy "
+                "(e.g., city info), answer helpfully and briefly in 3–5 sentences. Stay positive and inviting."
+            )},
+            {"role": "user", "content": user_text}
+        ])
+        return resp["choices"][0]["message"]["content"].strip()
+    except Exception:
+        return "I’ll gladly help with that. May I assist you with reservations, room service, or dining while I look into this?"
+
+# ────────────────────────────────────────────────────────────────────────────────
+# Instantiate AssistantAgent objects (kept for parity with your stack)
+# ────────────────────────────────────────────────────────────────────────────────
+receptionist_agent = AssistantAgent(
+    name="Receptionist",
+    model_client=model_client,
+    system_message="Polite, warm, helpful front desk assistant for Hotel Eswaran."
+)
+room_service_agent = AssistantAgent(
+    name="RoomService",
+    model_client=model_client,
+    system_message="Prompt, helpful room service assistant for Hotel Eswaran."
+)
+restaurant_agent = AssistantAgent(
+    name="Restaurant",
+    model_client=model_client,
+    system_message="Courteous restaurant assistant for Hotel Eswaran."
+)
+visitor_agent = UserProxyAgent(name="Visitor")
+
+AGENT_MAP = {
+    "Receptionist": receptionist_agent,
+    "RoomService": room_service_agent,
+    "Restaurant": restaurant_agent
+}
+
+# ────────────────────────────────────────────────────────────────────────────────
+# Streamlit UI
+# ────────────────────────────────────────────────────────────────────────────────
+st.set_page_config(page_title="Hotel Eswaran – Multi-Agent Assistant", page_icon="🏨", layout="centered")
+st.title("🏨 Hotel Eswaran – Multi-Agent Assistant")
+st.caption("Polite, structured assistants for Reception, Room Service, and Restaurant.")
+
+with st.sidebar:
+    st.subheader("Assistant Settings")
+    use_llm_fallback = st.toggle("Use LLM fallback for non-hotel queries", value=True)
+    st.markdown("**Quick Facts**")
+    st.write(f"• {HOTEL_KB['food']}")
+    st.write(f"• {HOTEL_KB['room_service']}")
+    st.write(f"• {HOTEL_KB['check_in_out']}")
+    st.write(f"• {HOTEL_KB['promotions']}")
+
+if "chat" not in st.session_state:
+    st.session_state.chat = []  # list of dicts: {role: "user"|"assistant", "content": str}
+
+# Render history
+for m in st.session_state.chat:
+    with st.chat_message(m["role"]):
+        st.markdown(m["content"])
+
+# Input
+user_input = st.chat_input("Ask about reservations, room service, or dining...")
+if user_input:
+    st.session_state.chat.append({"role": "user", "content": user_input})
+    with st.chat_message("user"):
+        st.markdown(user_input)
+
+    # Route to bot
+    bot = route_bot(user_input)
+    bot_scripts = SCRIPTS[bot]
+    agent = AGENT_MAP[bot]
+
+    # Always open with a warm greeting if this is the first turn for this bot in the session
+    # (light heuristic: greet on first message or when bot changes)
+    last_bot = st.session_state.get("last_bot")
+    preface = ""
+    if last_bot != bot:
+        preface = bot_scripts["greeting"]
+    st.session_state["last_bot"] = bot
+
+    # Intent handling with predefined content flows
+    intent = match_intent(bot, user_input)
+
+    # Build the reply using structured scripts and hotel KB
+    reply_parts = []
+    if preface:
+        reply_parts.append(preface)
+
+    if bot == "Receptionist":
+        # High-priority fixed answers from your requirements
+        txt = user_input.lower()
+        if any(k in txt for k in ["food", "breakfast", "lunch", "dinner", "restaurant menu"]):
+            reply_parts.append(HOTEL_KB["food"])
+        if any(k in txt for k in ["room service", "roomservice", "service to room", "24x7", "24/7", "24*7"]):
+            reply_parts.append(HOTEL_KB["room_service"])
+        if any(k in txt for k in ["rooms", "room price", "room cost", "affordable", "rate", "price"]):
+            reply_parts.append(HOTEL_KB["rooms"])
+
+        # Scripted intents
+        if intent and intent in bot_scripts["intents"]:
+            reply_parts.append(bot_scripts["intents"][intent])
+
+        # If no content yet, provide a helpful default & optionally LLM fallback for city info
+        if not reply_parts:
+            if any(k in txt for k in ["attraction", "sightseeing", "nearby", "place"]):
+                reply_parts.append(bot_scripts["intents"]["attractions"])
+                if use_llm_fallback:
+                    reply_parts.append(llm_fallback_answer(user_input))
+            else:
+                reply_parts.append(bot_scripts["fallback"])
+
+    elif bot == "RoomService":
+        # High-priority fixed answers
+        txt = user_input.lower()
+        if any(k in txt for k in ["breakfast", "lunch", "dinner", "menu", "food"]):
+            reply_parts.append(HOTEL_KB["food"])
+        if any(k in txt for k in ["24x7", "24/7", "24*7", "room service", "roomservice"]):
+            reply_parts.append(HOTEL_KB["room_service"])
+
+        # Scripted intents
+        if intent and intent in bot_scripts["intents"]:
+            reply_parts.append(bot_scripts["intents"][intent])
+
+        if not reply_parts:
+            reply_parts.append(bot_scripts["fallback"])
+
+    elif bot == "Restaurant":
+        # High-priority fixed answers
+        txt = user_input.lower()
+        if any(k in txt for k in ["breakfast", "lunch", "dinner", "menu", "food"]):
+            reply_parts.append(HOTEL_KB["food"])
+
+        # Scripted intents
+        if intent and intent in bot_scripts["intents"]:
+            reply_parts.append(bot_scripts["intents"][intent])
+
+        # Add hours if asked
+        if any(k in txt for k in ["hour", "timing", "open", "close"]):
+            reply_parts.append(HOTEL_KB["restaurant_hours"])
+
+        if not reply_parts:
+            reply_parts.append(bot_scripts["fallback"])
+
+    # Join and ensure a positive closing
+    reply_text = " ".join(reply_parts).strip()
+    if not reply_text:
+        reply_text = "I’m here to help. May I assist you with reservations, room service, or dining?"
+
+    # Add a universal polite closing nudge
+    reply_text += " May I assist you with anything else?"
+
+    st.session_state.chat.append({"role": "assistant", "content": reply_text})
+    with st.chat_message("assistant"):
+        st.markdown(reply_text)
